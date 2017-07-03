@@ -1,0 +1,16 @@
+tcp_server:
+  host: 0.0.0.0
+  port: 2003
+debug_level: 10
+access_point: ap-northeast-1
+aws_IoT_broker:
+  us-east-2:
+    host: a1j9v713o2vs6q.iot.us-east-2.amazonaws.com
+    ca_path: us/rootca
+    certificate_path: us/1f3a000633-certificate.pem.crt
+    privateKey_path: us/1f3a000633-private.pem.key
+  ap-northeast-1:
+    host: a1j9v713o2vs6q.iot.ap-northeast-1.amazonaws.com
+    ca_path: ap/rootca
+    certificate_path: ap/018c346619-certificate.pem.crt
+    privateKey_path: ap/018c346619-private.pem.key
