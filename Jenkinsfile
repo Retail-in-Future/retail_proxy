@@ -6,5 +6,5 @@ node {
     checkout scm
 
     stage 'build'
-    sh "./nosetests"
+    sh "nosetests"
 }
