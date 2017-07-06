@@ -1,7 +1,8 @@
+import ast
+import json
 import os
 import time
-from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
-from proxy.nodemcu_agt import nodemcu_agt_set_proxy, NodemcuAgent
+from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient, AWSIoTMQTTShadowClient
 from proxy.utils import read_yaml_config, singleton
 
 _PROXY = None
@@ -12,10 +13,21 @@ def aws_agt_set_proxy(proxy):
     _PROXY = proxy
 
 
-def notify_cb(client, userdata, message):
-    print(message.topic, message.payload)
-    if _PROXY is not None:
-        _PROXY.msg_2_nodemcu(message.topic, message.payload)
+def shadow_cb_update(payload, resp_stu, token):
+    # payload is a JSON string ready to be parsed using json.loads(...)
+    # in both Py2.x and Py3.x
+    print("rcv update", payload, resp_stu, token)
+
+
+def shadow_cb_delta(payload, resp_stu, token):
+    # payload is a JSON string ready to be parsed using json.loads(...)
+    # in both Py2.x and Py3.x
+    print("rcv delta", payload, resp_stu, token)
+    dict_payload = ast.literal_eval(payload)
+    state = dict_payload.get("state", None)
+    if state is not None:
+        if _PROXY is not None:
+            _PROXY.msg_2_nodemcu(state)
 
 
 class AwsIotAgent(metaclass=singleton):
@@ -39,22 +51,43 @@ class AwsIotAgent(metaclass=singleton):
         self.__aws_iot_mqtt_cli.configureConnectDisconnectTimeout(10)  # 10 sec
         self.__aws_iot_mqtt_cli.configureMQTTOperationTimeout(5)  # 5 sec
 
-    def start(self):
         self.__aws_iot_mqtt_cli.connect()
 
-    def publish(self, topic, payload):
-        self.__aws_iot_mqtt_cli.publish(topic, payload, 0)
+        self.__aws_iot_shadow_cli = AWSIoTMQTTShadowClient("entry_dev")
+        self.__aws_iot_shadow_cli.configureEndpoint(access_point["host"], 8883)
+        self.__aws_iot_shadow_cli.configureCredentials(access_point["ca_path"],
+                                                       access_point["privateKey_path"],
+                                                       access_point["certificate_path"])
+        self.__aws_iot_shadow_cli.configureAutoReconnectBackoffTime(1, 32, 20)
+        self.__aws_iot_shadow_cli.configureConnectDisconnectTimeout(10)  # 10 sec
+        self.__aws_iot_shadow_cli.configureMQTTOperationTimeout(5)  # 5 sec
 
-    def subscribe(self, topic):
-        self.__aws_iot_mqtt_cli.subscribe(topic, 1, notify_cb)
+        self.__aws_iot_shadow_cli.connect()
+        self.__device_shadow = self.__aws_iot_shadow_cli.createShadowHandlerWithName(config["thing_name"], True)
+        self.__device_shadow.shadowRegisterDeltaCallback(shadow_cb_delta)
 
-    def unsubscribe(self, topic):
-        self.__aws_iot_mqtt_cli.unsubscribe(topic)
+    def publish(self, data):
+        for (topic, payload) in data.items():
+            value = str("\"" + payload + "\"")
+            self.__aws_iot_mqtt_cli.publish(topic, value, 0)
+            print("send publish", topic, payload)
+
+#    def subscribe(self, topic):
+#        self.__aws_iot_mqtt_cli.subscribe(topic, 1, notify_cb)
+
+    def update_dev_shadow(self, shadow_file):
+        dict_shadow_file = dict()
+        dict_shadow_file["state"] = {"reported": shadow_file, "desired": None}
+        json_file = json.dumps(dict_shadow_file)
+        self.__device_shadow.shadowUpdate(json_file, shadow_cb_update, 5)
+        print("update shadow ", json_file)
+
+#    def unsubscribe(self, topic):
+#        self.__aws_iot_mqtt_cli.unsubscribe(topic)
 
 
 if __name__ == '__main__':
     aws_iot_agt = AwsIotAgent()
-    aws_iot_agt.start()
 
     aws_iot_agt.subscribe("entry_token")
     time.sleep(2)

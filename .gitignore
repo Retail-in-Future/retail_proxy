@@ -1,1 +1,14 @@
 # Created by .ignore support plugin (hsz.mobi)
+test/__pycache__/test_aws_iot_agt.cpython-36.pyc
+test/__pycache__/test_nodemcu_agt.cpython-36.pyc
+test/__pycache__/test_session.cpython-36.pyc
+.tox/
+proxy/__init__.pyc
+proxy/utils.pyc
+retail_proxy.egg-info/
+test/__init__.pyc
+test/test_aws_iot_agt.pyc
+test/test_config.pyc
+test/test_nodemcu_agt.pyc
+test/test_proxy.pyc
+test/test_session.pyc
