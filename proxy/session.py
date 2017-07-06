@@ -1,7 +1,7 @@
 from proxy.utils import singleton
 
 
-class Session(metaclass=singleton):
+class Session:
     def __init__(self):
         self.__subscrption_list = dict()
 

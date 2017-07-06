@@ -5,6 +5,6 @@ node {
     stage 'clone'
     checkout scm
 
-    stage 'clean & build'
+    stage 'build'
     tox
 }
