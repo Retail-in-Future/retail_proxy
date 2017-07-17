@@ -1,10 +1,10 @@
-#!/usr/bin/env groovy
-
-node {
-
-    stage 'clone'
-    checkout scm
-
-    stage 'build'
-    sh "nosetests"
+pipeline {
+    agent any
+    stages {
+        stage("Build") {
+            steps {
+                sh 'scripts/ci/build.sh'
+            }
+        }
+    }
 }
