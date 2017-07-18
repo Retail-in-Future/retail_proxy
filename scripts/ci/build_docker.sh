@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# SCRIPT: build 
+# SCRIPT: build_docker
 # AUTHOR: Tang Cheng
 # DATE:   2017/07/17
 # REV:    1.0.D (Valid are A, B, D, T, Q, and P)
@@ -8,7 +8,7 @@
 #
 # PLATFORM: Linux
 #
-# PURPOSE: Build a project managed with autoconf toolset.
+# PURPOSE: Build a docker environment to run test.
 # 
 #
 # set -n   # Uncomment to check script syntax, without execution.
@@ -37,12 +37,6 @@ pushd $topdir
 app_name=$(basename $(pwd))
 docker_image_id=`echo "local/${app_name}:latest" | tr "[:upper:]" "[:lower:]"`
 docker build -t $docker_image_id -f dockers/fedora25-x86_64-Dockerfile .
-
-docker run -i -e DOCKER_HOST_USERID="$(id -u):$(id -g)" --rm $docker_image_id /bin/bash << "EOF"
-set -o errexit -o nounset \
-\
-&& nosetests \
-EOF
 
 #popd
 

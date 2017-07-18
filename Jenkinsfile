@@ -1,9 +1,14 @@
 pipeline {
     agent any
     stages {
-        stage("Build") {
+        stage("Build docker") {
             steps {
-                sh 'scripts/ci/build.sh'
+                sh 'scripts/ci/build_docker.sh'
+            }
+        }
+        stage("Run test") {
+            steps {
+                sh 'scripts/ci/test.sh'
             }
         }
     }
